@@ -74,15 +74,15 @@ export async function fetchRepoData(url: string): Promise<RepoData> {
   const { owner, name } = parseRepoUrl(url);
   const nwo = `${owner}/${name}`;
 
-  // Repo metadata
-  const meta = JSON.parse(gh(`api repos/${nwo} --jq '{description: .description, language: .language, stars: .stargazers_count, forks: .forks_count, createdAt: .created_at}'`));
+  // Repo metadata (include defaultBranch here to avoid a second API call and string-parse issues)
+  const meta = JSON.parse(gh(`api repos/${nwo} --jq '{description: .description, language: .language, stars: .stargazers_count, forks: .forks_count, createdAt: .created_at, defaultBranch: .default_branch}'`));
 
   // Recent commits (last 60)
   const commitsRaw = JSON.parse(gh(`api repos/${nwo}/commits?per_page=60 --jq '[.[] | {hash: .sha[:7], message: .commit.message, author: .commit.author.name, date: .commit.author.date[:10]}]'`));
   const commits: CommitSummary[] = commitsRaw;
 
   // File tree via git trees API (recursive)
-  const defaultBranch = JSON.parse(gh(`api repos/${nwo} --jq '.default_branch'`));
+  const defaultBranch: string = meta.defaultBranch;
   const treeRaw = JSON.parse(gh(`api repos/${nwo}/git/trees/${defaultBranch}?recursive=1 --jq '[.tree[] | select(.type == "blob") | .path]'`));
   const allFiles: string[] = treeRaw;
 
