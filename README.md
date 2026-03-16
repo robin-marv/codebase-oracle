@@ -105,3 +105,17 @@ Works on any public GitHub repo. Works on private repos you have `gh` access to.
 - Works best on repos with meaningful commit history and PR descriptions
 - Brand new repos with one commit will get a shallow reading
 - The oracle has opinions. They are not always flattering.
+
+---
+
+## Contributing / Publishing
+
+The publish workflow runs on every merge to `main` but only publishes to npm when the version in `package.json` has changed.
+
+**To ship a new release:**
+
+1. Bump the version in your PR — `npm version patch` (or `minor`/`major`)
+2. Merge to `main`
+3. The workflow publishes automatically
+
+Merges without a version bump are safe — the publish step is skipped.
