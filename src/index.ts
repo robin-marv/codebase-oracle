@@ -4,32 +4,42 @@ import { resolveApiKey } from './auth.js';
 import { fetchRepoData } from './fetch.js';
 import { analyzeRepo } from './analyze.js';
 import { renderReading } from './render.js';
+import { saveLocally, contributePR, promptContribution } from './contribute.js';
+
+const args = process.argv.slice(2);
+const repoArg = args.find(a => !a.startsWith('-'));
+const flagSave = args.includes('--save');
+const flagContribute = args.includes('--contribute');
+const flagHelp = args.includes('--help') || args.includes('-h');
+
+if (flagHelp || !repoArg) {
+  console.log('');
+  console.log('  Usage: oracle <github-repo-url> [options]');
+  console.log('');
+  console.log('  Examples:');
+  console.log('    oracle https://github.com/vercel/next.js');
+  console.log('    oracle facebook/react');
+  console.log('    oracle owner/repo --contribute');
+  console.log('');
+  console.log('  Options:');
+  console.log('    --save         Save the reading as JSON in ./samples/');
+  console.log('    --contribute   Submit the reading as a PR to the gallery');
+  console.log('    --help, -h     Show this help message');
+  console.log('');
+  console.log('  Requirements:');
+  console.log('    • gh CLI installed and authenticated (github.com/cli/cli)');
+  console.log('    • ANTHROPIC_API_KEY env var set, or paste it when prompted');
+  console.log('');
+  process.exit(repoArg ? 0 : 1);
+}
 
 async function main(): Promise<void> {
-  const repoArg = process.argv[2];
-
-  if (!repoArg || repoArg === '--help' || repoArg === '-h') {
-    console.log('');
-    console.log('  Usage: oracle <github-repo-url>');
-    console.log('');
-    console.log('  Examples:');
-    console.log('    oracle https://github.com/vercel/next.js');
-    console.log('    oracle facebook/react');
-    console.log('    oracle owner/repo');
-    console.log('');
-    console.log('  Requirements:');
-    console.log('    • gh CLI installed and authenticated (github.com/cli/cli)');
-    console.log('    • ANTHROPIC_API_KEY env var set, or paste it when prompted');
-    console.log('');
-    process.exit(repoArg ? 0 : 1);
-  }
-
   const apiKey = await resolveApiKey();
 
   const fetchSpinner = ora({ text: 'Reading the repository...', color: 'magenta' }).start();
   let repo;
   try {
-    repo = await fetchRepoData(repoArg);
+    repo = await fetchRepoData(repoArg!);
     fetchSpinner.succeed(`Fetched ${repo.owner}/${repo.name} — ${repo.fileTree.length} files, ${repo.commits.length} commits`);
   } catch (e: unknown) {
     const err = e as Error;
@@ -53,6 +63,19 @@ async function main(): Promise<void> {
   }
 
   renderReading(repo, reading);
+
+  if (flagSave) {
+    const path = saveLocally(repo, reading);
+    console.log(`  ✓ Saved to ${path}`);
+    console.log('');
+  }
+
+  if (flagContribute) {
+    await contributePR(repo, reading);
+  } else if (!flagSave) {
+    // Interactive prompt — only when neither flag was passed
+    await promptContribution(repo, reading);
+  }
 }
 
 main().catch(e => {

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Codebase Oracle — Gallery</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #666;
+      --magenta: #c678dd;
+      --cyan: #56b6c2;
+      --green: #98c379;
+      --yellow: #e5c07b;
+      --red: #e06c75;
+      --white: #abb2bf;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    header h1 {
+      color: var(--magenta);
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.4rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    header a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    header a:hover { text-decoration: underline; }
+
+    .contribute-banner {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .contribute-banner code {
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--green);
+      padding: 0.1em 0.4em;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .loading {
+      text-align: center;
+      color: var(--muted);
+      padding: 4rem 0;
+      font-size: 0.9rem;
+    }
+
+    .error {
+      text-align: center;
+      color: var(--red);
+      padding: 4rem 0;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: var(--magenta);
+      transform: translateY(-1px);
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-repo {
+      color: var(--cyan);
+      font-size: 0.82rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-repo a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .card-repo a:hover { text-decoration: underline; }
+
+    .card-archetype {
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .card-body {
+      padding: 1rem 1.25rem;
+    }
+
+    .card-character {
+      color: var(--text);
+      font-size: 0.8rem;
+      line-height: 1.65;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.15em 0.5em;
+      border-radius: 3px;
+      border: 1px solid;
+    }
+
+    .tag-strengths { color: var(--green); border-color: var(--green); opacity: 0.8; }
+    .tag-tensions  { color: var(--yellow); border-color: var(--yellow); opacity: 0.8; }
+    .tag-language  { color: var(--cyan); border-color: var(--cyan); opacity: 0.7; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+    }
+
+    .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-width: 720px;
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-repo {
+      color: var(--cyan);
+      font-size: 0.82rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-repo a { color: inherit; text-decoration: none; }
+    .modal-repo a:hover { text-decoration: underline; }
+
+    .modal-archetype {
+      color: var(--magenta);
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-section-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+      font-weight: bold;
+    }
+
+    .section-character .modal-section-title { color: var(--cyan); }
+    .section-strengths .modal-section-title { color: var(--green); }
+    .section-tensions .modal-section-title  { color: var(--yellow); }
+    .section-autopsy .modal-section-title   { color: var(--red); }
+    .section-verdict .modal-section-title   { color: var(--white); }
+
+    .modal-prose {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .modal-prose p { margin-bottom: 0.75em; }
+    .modal-prose p:last-child { margin-bottom: 0; }
+
+    .modal-list {
+      list-style: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .modal-list li {
+      padding: 0.3rem 0;
+      padding-left: 1.5em;
+      position: relative;
+    }
+
+    .section-strengths .modal-list li::before { content: '+'; position: absolute; left: 0; color: var(--green); }
+    .section-tensions  .modal-list li::before { content: '±'; position: absolute; left: 0; color: var(--yellow); }
+
+    .modal-separator {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .count { color: var(--muted); font-size: 0.8rem; margin-left: 0.4rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>◈ THE CODEBASE ORACLE ◈</h1>
+  <p>
+    A gallery of personality profiles for software projects.
+    Built with <a href="https://github.com/robin-marv/codebase-oracle" target="_blank">codebase-oracle</a>.
+  </p>
+</header>
+
+<div class="contribute-banner">
+  Run a reading on any repo and contribute it:
+  <code>oracle owner/repo --contribute</code>
+</div>
+
+<main>
+  <div class="loading" id="loading">Loading readings...</div>
+  <div class="error" id="error" style="display:none"></div>
+  <div class="gallery" id="gallery" style="display:none"></div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+const REPO_API = 'https://api.github.com/repos/robin-marv/codebase-oracle';
+
+async function fetchSamples() {
+  const res = await fetch(`${REPO_API}/contents/samples`);
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+  const files = await res.json();
+  const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+
+  const samples = await Promise.all(
+    jsonFiles.map(async f => {
+      const r = await fetch(f.download_url);
+      return r.json();
+    })
+  );
+
+  // Sort: self-profile first, then by stars desc, then alphabetical
+  return samples.sort((a, b) => {
+    if (a.repo === 'robin-marv/codebase-oracle') return -1;
+    if (b.repo === 'robin-marv/codebase-oracle') return 1;
+    return (b.stars - a.stars) || a.repo.localeCompare(b.repo);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function nl2p(text) {
+  return text.split(/\n\n+/).map(p => `<p>${escapeHtml(p.trim())}</p>`).join('');
+}
+
+function renderCard(sample) {
+  const { repo, language, stars, reading } = sample;
+  const repoUrl = `https://github.com/${repo}`;
+  const firstPara = reading.coreCharacter.split('\n\n')[0];
+
+  return `
+    <div class="card" data-repo="${escapeHtml(repo)}">
+      <div class="card-header">
+        <div class="card-repo">
+          <a href="${escapeHtml(repoUrl)}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(repo)}</a>
+        </div>
+        <div class="card-archetype">${escapeHtml(reading.archetype)}</div>
+        <div class="card-meta">
+          ${language ? `<span>${escapeHtml(language)}</span>` : ''}
+          <span>${stars === 1 ? '1 star' : `${stars} stars`}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-character">${escapeHtml(firstPara)}</div>
+        <div class="card-tags">
+          ${language ? `<span class="tag tag-language">${escapeHtml(language)}</span>` : ''}
+          <span class="tag tag-strengths">${reading.strengths.length} strengths</span>
+          <span class="tag tag-tensions">${reading.tensions.length} tensions</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderModal(sample) {
+  const { repo, reading } = sample;
+  const repoUrl = `https://github.com/${repo}`;
+
+  const strengthsHtml = reading.strengths
+    .map(s => `<li>${escapeHtml(s)}</li>`).join('');
+  const tensionsHtml = reading.tensions
+    .map(t => `<li>${escapeHtml(t)}</li>`).join('');
+
+  return `
+    <div class="modal-repo">
+      <a href="${escapeHtml(repoUrl)}" target="_blank">${escapeHtml(repo)}</a>
+    </div>
+    <div class="modal-archetype">${escapeHtml(reading.archetype)}</div>
+
+    <div class="modal-section section-character">
+      <div class="modal-section-title">Core Character</div>
+      <div class="modal-prose">${nl2p(reading.coreCharacter)}</div>
+    </div>
+
+    <hr class="modal-separator" />
+
+    <div class="modal-section section-strengths">
+      <div class="modal-section-title">Strengths</div>
+      <ul class="modal-list">${strengthsHtml}</ul>
+    </div>
+
+    <hr class="modal-separator" />
+
+    <div class="modal-section section-tensions">
+      <div class="modal-section-title">Tensions</div>
+      <ul class="modal-list">${tensionsHtml}</ul>
+    </div>
+
+    <hr class="modal-separator" />
+
+    <div class="modal-section section-autopsy">
+      <div class="modal-section-title">Commit Autopsy</div>
+      <div class="modal-prose"><p>${escapeHtml(reading.commitAutopsy)}</p></div>
+    </div>
+
+    <hr class="modal-separator" />
+
+    <div class="modal-section section-verdict">
+      <div class="modal-section-title">The Verdict</div>
+      <div class="modal-prose"><p>${escapeHtml(reading.verdict)}</p></div>
+    </div>`;
+}
+
+let samplesCache = [];
+
+async function init() {
+  const loading = document.getElementById('loading');
+  const errorEl = document.getElementById('error');
+  const gallery = document.getElementById('gallery');
+
+  try {
+    samplesCache = await fetchSamples();
+    loading.style.display = 'none';
+
+    if (samplesCache.length === 0) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = 'No readings yet. Be the first to contribute one.';
+      return;
+    }
+
+    gallery.innerHTML = samplesCache.map(renderCard).join('');
+    gallery.style.display = 'grid';
+
+    gallery.addEventListener('click', e => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      const repo = card.dataset.repo;
+      const sample = samplesCache.find(s => s.repo === repo);
+      if (!sample) return;
+      openModal(sample);
+    });
+
+  } catch (err) {
+    loading.style.display = 'none';
+    errorEl.style.display = 'block';
+    errorEl.innerHTML = `Failed to load readings.<br><small>${escapeHtml(err.message)}</small>`;
+  }
+}
+
+function openModal(sample) {
+  document.getElementById('modal-content').innerHTML = renderModal(sample);
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
