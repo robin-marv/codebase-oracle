@@ -8,12 +8,31 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js"
   },
-  "keywords": ["cli", "github", "ai", "code-analysis"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "cli",
+    "github",
+    "ai",
+    "code-analysis",
+    "personality",
+    "developer-tools"
+  ],
   "author": "robin-marv",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robin-marv/codebase-oracle.git"
+  },
+  "homepage": "https://robin-marv.github.io/codebase-oracle",
+  "bugs": {
+    "url": "https://github.com/robin-marv/codebase-oracle/issues"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "chalk": "^5.4.1",
