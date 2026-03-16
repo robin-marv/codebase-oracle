@@ -59,6 +59,47 @@ export function saveLocally(repo: RepoData, reading: OracleReading, outDir = './
  * Uses gh API calls only — no cloning required.
  */
 export async function contributePR(repo: RepoData, reading: OracleReading): Promise<void> {
+  // Preflight: gh must be installed
+  try {
+    execSync('gh --version', { stdio: 'ignore' });
+  } catch {
+    throw new Error(
+      'gh CLI is required to contribute. Install it at https://cli.github.com and then try again.'
+    );
+  }
+
+  // Preflight: gh must be authenticated
+  let isAuthed = false;
+  try {
+    execSync('gh auth status', { stdio: 'ignore' });
+    isAuthed = true;
+  } catch {
+    // not authenticated
+  }
+
+  if (!isAuthed) {
+    console.log('');
+    const { doLogin } = await prompts({
+      type: 'confirm',
+      name: 'doLogin',
+      message: "You're not logged into GitHub. Log in now with gh auth login?",
+      initial: true,
+    });
+
+    if (!doLogin) {
+      console.log('');
+      console.log('  Skipping contribution. Run `gh auth login` when ready and try again.');
+      console.log('');
+      return;
+    }
+
+    try {
+      execSync('gh auth login', { stdio: 'inherit' });
+    } catch {
+      throw new Error('Authentication failed. Run `gh auth login` manually and try again.');
+    }
+  }
+
   const sample = buildSample(repo, reading);
   const filename = sampleFilename(repo.owner, repo.name);
   const content = Buffer.from(JSON.stringify(sample, null, 2) + '\n').toString('base64');
