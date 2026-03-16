@@ -86,9 +86,10 @@ export async function contributePR(repo: RepoData, reading: OracleReading): Prom
   await new Promise(r => setTimeout(r, 3000));
 
   // 3. Get the current SHA of main on the oracle repo (source of truth, not the fork)
-  const mainSha: string = JSON.parse(
-    gh(`api repos/${ORACLE_REPO}/git/ref/heads/main --jq '.object.sha'`)
-  );
+  // Note: `gh api --jq` outputs string scalars as raw (unquoted) text, not JSON.
+  // Using JSON.parse here would fail on a hex SHA like "57bfd2..." (parses "57" as a
+  // number, then errors on "b" at position 2). Just trim the trailing newline instead.
+  const mainSha: string = gh(`api repos/${ORACLE_REPO}/git/ref/heads/main --jq '.object.sha'`).trim();
 
   // 4. Create (or reset) the branch on the fork
   try {
@@ -105,9 +106,8 @@ export async function contributePR(repo: RepoData, reading: OracleReading): Prom
   // 5. Check if file already exists (to get its SHA for update)
   let existingSha: string | undefined;
   try {
-    existingSha = JSON.parse(
-      gh(`api repos/${forkNwo}/contents/${filePath}?ref=${branchName} --jq '.sha'`)
-    );
+    // Same raw-string caveat as mainSha above — no JSON.parse needed.
+    existingSha = gh(`api repos/${forkNwo}/contents/${filePath}?ref=${branchName} --jq '.sha'`).trim();
   } catch {
     // File doesn't exist yet — that's expected
   }

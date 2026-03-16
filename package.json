@@ -1,6 +1,6 @@
 {
   "name": "codebase-oracle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A personality profiler for codebases. Feed it a GitHub repo, get back a character read.",
   "type": "module",
   "bin": {
